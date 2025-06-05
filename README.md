@@ -1,30 +1,4 @@
-<!-- Improved compatibility of volver al inicio link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a id="readme-top"></a>
-<!--
-*** Thanks for checking out the Best-README-Template. If you have a suggestion
-*** that would make this better, please fork the repo and create a pull request
-*** or simply open an issue with the tag "enhancement".
-*** Don't forget to give the project a star!
-*** Thanks again! Now go create something AMAZING! :D
--->
-
-
-
-<!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
-<!-- [![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![project_license][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url] -->
-
 
 <!-- PROJECT LOGO -->
 <br />
@@ -52,50 +26,51 @@
         </tr>
       </table>
     </div>
-    <!-- TODO: Completar esto. -->
-    <!-- <br />
-    <a href="https://github.com/brunomaso1/vision-transformer"><strong>Explore the docs »</strong></a>
+    <br />
+    <a href="https://github.com/brunomaso1/vision-transformer"><strong>Explora la documentación »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/brunomaso1/vision-transformer">View Demo</a>
+    <a href="https://github.com/brunomaso1/vision-transformer">Ver una demo</a>
     &middot;
-    <a href="https://github.com/brunomaso1/vision-transformer/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
+    <a href="https://github.com/brunomaso1/vision-transformer/issues/new?labels=bug&template=bug-report---.md">Reportar un problema</a>
     &middot;
-    <a href="https://github.com/brunomaso1/vision-transformer/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a> -->
+    <a href="https://github.com/brunomaso1/vision-transformer/issues/new?labels=enhancement&template=feature-request---.md">Solicitar una característica</a>
   </p>
 </div>
-
-
 
 <!-- TABLE OF CONTENTS -->
 <details>
   <summary>Tabla de contenido</summary>
   <ol>
     <li>
-      <a href="#about-the-project">Sobre el proyecto</a>
+      <a href="#about-the-project">🚀 Sobre el proyecto</a>
       <ul>
-        <li><a href="#scafolding">Estructura</a></li>
-        <li><a href="#build-with">Herramientas</a></li>
+        <li><a href="#scafolding">📝 Estructura</a></li>
+        <li><a href="#build-with">🛠️ Herramientas</a></li>
       </ul>
     </li>
     <li>
-      <a href="#getting-started">Comienzo</a>
+      <a href="#getting-started">🏁 Comienza aquí</a>
       <ul>
-        <li><a href="#prerequisites">Prerequisitos</a></li>
+        <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Instalación</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Uso</a></li>
-    <li><a href="#contributing">Contribuir</a></li>
-    <li><a href="#license">Licencia</a></li>
-    <li><a href="#contact">Contacto</a></li>
-    <li><a href="#acknowledgments">Agradecimientos</a></li>
+    <li><a href="#usage">⚡ Uso</a></li>
+    <li><a href="#roadmap">🛣️ Roadmap</a></li>
+    <li><a href="#contributing">👨‍👩‍👧‍👦 Contribuir</a></li>
+    <li><a href="#contributors">Mejores contribuyentes</a></li>
+    <li><a href="#license">⚠️ Licencia</a></li>
+    <li><a href="#contact">📞 Contacto</a></li>
   </ol>
 </details>
 
 <!-- ABOUT THE PROJECT -->
 ## 🚀 Sobre el proyecto
 <a id="about-the-project"></a>
+
+<!-- TODO:
+* Poner una imagen de inferencia de un modelo. -->
 
 Este proyecto tiene como objetivo clasificar imágenes satelitales utilizando <em>vision transformers</em>. Se posiciona en el marco de un trabajo final para la materia "Visión por Computadora 3" del posgrado en Inteligencia Artificial de la Facultad de Ingeniería de la Universidad de Buenos Aires.
 
@@ -167,130 +142,133 @@ La estructura del proyecto es la siguiente:
 
 Este proyecto está construido utilizando una variedad de herramientas entre las cuales se incluyen:
 
-* [![Python][Python.org]][python-url]
+* [![Python][python.org]][python-url]
 * [![Cookiecutter Data Science][cookiecutter-data-science.drivendata.org]][cookiecutter-data-science-url]
-
-> [!WARNING]  
-> TODO de acá en delante.
+* [![Poetry][python-poetry.org]][python-poetry-url]
 
 <p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
 
 <!-- GETTING STARTED -->
-## Getting Started
+## 🏁 Comienza aquí
+<a id="getting-started"></a>
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+Este es un ejemplo de cómo puedes dar instrucciones para configurar tu proyecto localmente.
+Para obtener una copia local y ejecutarla, sigue estos sencillos pasos de ejemplo.
 
 ### Prerequisites
+<a id="prerequisites"></a>
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
+* **Poetry**: Asegúrate de tener instalado [Poetry](https://python-poetry.org/docs/#installation) para gestionar las dependencias del proyecto.
+* **Python**: Este proyecto requiere Python 3.13 o superior. Puedes descargarlo desde [python.org](https://www.python.org/downloads/).
 
-### Installation
-
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/brunomaso1/vision-transformer.git
-   ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
-5. Change git remote url to avoid accidental pushes to base project
-   ```sh
-   git remote set-url origin brunomaso1/vision-transformer
-   git remote -v # confirm the changes
-   ```
-
-<p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
-
-
-
-<!-- USAGE EXAMPLES -->
-## Usage
-
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
-
-<p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
-
-
-
-<!-- ROADMAP -->
-## Roadmap
-
-- [ ] Feature 1
-- [ ] Feature 2
-- [ ] Feature 3
-    - [ ] Nested Feature
-
-See the [open issues](https://github.com/brunomaso1/vision-transformer/issues) for a full list of proposed features (and known issues).
-
-<p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
-
-
-
-<!-- CONTRIBUTING -->
-## Contributing
-
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+### Instalación
+<a id="installation"></a>
 
 1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+   - Ve a la página del proyecto en GitHub y haz clic en el botón "Fork" para crear una copia del repositorio en tu cuenta.
+   - Alternativamente, puedes clonar el repositorio directamente si no deseas hacer un fork mediante el siguiente comando:
+     - `bash`:
+        ```sh
+        git clone https://github.com/brunomaso1/vision-transformer.git
+        ```
+2. Con Poetry, instala las dependencias del proyecto:
+    - `bash`:
+   ```sh
+   poetry install
+   ```
+3. Activa el entorno virtual via:
+     - `powershell`:
+   ```powerShell
+   Invoque-Expresion(poetry env activate)
+   ```
+     - `bash`:
+   ```bash
+   eval $(poetry env activate)
+   ```
 
 <p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
 
-### Top contributors:
+<!-- USAGE EXAMPLES -->
+## ⚡ Uso
+<a id="usage"></a>
+
+> [!WARNING]  
+> 🚧 Sección en construcción... 🚧
+
+<!-- TODO:
+* Explicar cómo ejecutar el proyecto, por ejemplo, cómo entrenar un modelo o hacer inferencias.
+* Incluir ejemplos de comandos que se pueden ejecutar en la terminal.
+* Incluir ejemplos de cómo utilizar las funciones principales del proyecto.
+
+_Para más ejemplos, consulta la [Documentación](https://example.com)_
+ -->
+
+<p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
+
+<!-- ROADMAP -->
+## 🛣️ Roadmap
+<a id="roadmap"></a>
+
+- [ ] Mejorar la documentación del proyecto.
+- [ ] Crear el pipeline de entrenamiento y evaluación de modelos.
+- [ ] Implementar un modelo de <em>vision transformer</em> para clasificación de imágenes.
+
+Consulta la [lista de issues abiertas](https://github.com/brunomaso1/vision-transformer/issues) para ver todas las características propuestas (y problemas conocidos).
+
+<p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
+
+<!-- CONTRIBUTING -->
+## 👨‍👩‍👧‍👦 Contribuir
+<a id="contributing"></a>
+
+Las contribuciones son lo que hace que la comunidad de código abierto sea un lugar increíble para aprender, inspirar y crear. **¡Cualquier contribución que realices será muy apreciada!**
+
+Si tienes una sugerencia para mejorar este proyecto, por favor haz un fork del repositorio y crea un pull request. También puedes abrir un issue con la etiqueta "enhancement".  
+¡No olvides darle una estrella al proyecto! ¡Gracias nuevamente!
+
+1. Haz un fork del proyecto
+2. Crea una rama para tu funcionalidad (`git checkout -b feature/FuncionalidadAsombrosa`)
+3. Realiza tus cambios y haz commit (`git commit -m 'Agrega FuncionalidadAsombrosa'`)
+4. Haz push a la rama (`git push origin feature/FuncionalidadAsombrosa`)
+5. Abre un Pull Request
+
+<p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
+
+### Mejores contribuyentes
+<a id="contributors"></a>
 
 <a href="https://github.com/brunomaso1/vision-transformer/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=brunomaso1/vision-transformer" alt="contrib.rocks image" />
 </a>
 
-
-
 <!-- LICENSE -->
-## License
+## ⚠️ Licencia
+<a id="license"></a>
 
-Distributed under the project_license. See `LICENSE.txt` for more information.
+Distribuido bajo la licencia GNU. Consulta `LICENSE` para más información.
 
 <p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
-
-
 
 <!-- CONTACT -->
-## Contact
+## 📞 Contacto
+<a id="contact"></a>
 
-Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email@email_client.com
-
-Project Link: [https://github.com/brunomaso1/vision-transformer](https://github.com/brunomaso1/vision-transformer)
+- Bruno Masoller (brunomaso1@gmail.com)
+- Juan Cruz Ferreyra (ferreyra.juancruz95@gmail.com)
+- Mauro Aguirregaray (maguirregaray13cb@gmail.com)
 
 <p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
-
-
 
 <!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
+<!-- TODO:
+* Agradecimientos.
+## 🫂 Acknowledgments
 
 * []()
 * []()
 * []()
 
-<p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
+<p align="right">(<a href="#readme-top">volver al inicio</a>)</p> -->
 
 
 
@@ -301,3 +279,5 @@ Project Link: [https://github.com/brunomaso1/vision-transformer](https://github.
 
 [python-url]: https://www.python.org/
 [python.org]: https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white
+[python-poetry-url]: https://python-poetry.org/
+[python-poetry.org]: https://img.shields.io/badge/poetry-000000?style=for-the-badge&logo=poetry&logoColor=white
