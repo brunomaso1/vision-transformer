@@ -5,8 +5,7 @@ from dotenv import load_dotenv
 from loguru import logger
 
 # Load environment variables from .env file if it exists
-ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
-load_dotenv(".env.{ENVIRONMENT}")
+load_dotenv()
 
 # Paths
 PROJ_ROOT = Path(__file__).resolve().parents[1]
