@@ -1,16 +1,22 @@
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from loguru import logger
 
 # Load environment variables from .env file if it exists
-load_dotenv()
+dotenv_path = find_dotenv()
+load_dotenv(dotenv_path)
 
 # Paths
 PROJ_ROOT = Path(__file__).resolve().parents[1]
 logger.info(f"PROJ_ROOT path is: {PROJ_ROOT}")
 
+# Environment
+ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
+logger.info(f"Actual environment is: {ENVIRONMENT}")
+
+# Folders
 DATA_DIR = PROJ_ROOT / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 INTERIM_DATA_DIR = DATA_DIR / "interim"
@@ -21,8 +27,6 @@ MODELS_DIR = PROJ_ROOT / "models"
 
 REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
-
-ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
 
 # If tqdm is installed, configure loguru with tqdm.write
 # https://github.com/Delgan/loguru/issues/135
