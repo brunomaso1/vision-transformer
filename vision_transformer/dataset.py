@@ -1,6 +1,8 @@
 import zipfile, requests, shutil
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Tuple
+
+from sklearn.model_selection import train_test_split
 
 from loguru import logger
 from tqdm import tqdm
@@ -10,8 +12,10 @@ from vision_transformer.config import (
     DATA_RAW_FILE_ZIP,
     DATA_RAW_URL,
     DATASET_CONFIG,
+    IMAGE_EXTENSIONS,
     INTERIM_DATA_DIR,
     PROCESSED_DATA_DIR,
+    RANDOM_SEED,
     RAW_DATA_DIR,
     RAW_DATA_EXTRACTION_DIR,
 )
@@ -117,26 +121,60 @@ def convert_dataset_to_model_format(
     format: DatasetFormat = DatasetFormat.HUGGINGFACE,
     dataset_path: Path = RAW_DATA_EXTRACTION_DIR,
     output_dir: Path = DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["interim_folderpath"],
+    summary: bool = True,
+    delte_previous_data: bool = True,
     clean: bool = False,
 ):
+    """
+    Convierte un dataset al formato requerido por el modelo especificado.
+
+    Args:
+        format (DatasetFormat, optional): Formato de salida del dataset. Por defecto es DatasetFormat.HUGGINGFACE.
+        dataset_path (Path, optional): Ruta al directorio de entrada con los datos a convertir. Por defecto es RAW_DATA_EXTRACTION_DIR.
+        output_dir (Path, optional): Ruta al directorio donde se guardarán los datos convertidos. Por defecto es la ruta configurada para el formato seleccionado.
+        summary (bool, optional): Si es True, genera un archivo de resumen del dataset convertido. Por defecto es True.
+        delte_previous_data (bool, optional): Si es True, elimina los datos previos en el directorio de salida antes de la conversión. Por defecto es True.
+        clean (bool, optional): Si es True, elimina el directorio de entrada después de la conversión. Por defecto es False.
+
+    Raises:
+        typer.Exit: Si el directorio de entrada no existe.
+        typer.Exit: Si la estructura del dataset no es compatible con el formato seleccionado.
+        typer.Exit: Si ocurre un error al eliminar datos previos.
+        typer.Exit: Si el formato solicitado no está implementado.
+        typer.Exit: Si ocurre un error inesperado durante la conversión o limpieza.
+    """
+    # Validar que exista el directorio de entrada
+    if not dataset_path.exists():
+        logger.error(f"El directorio de entrada no existe: {dataset_path}")
+        raise typer.Exit(1)
+
+    # Validaciones sobre el formato: directorio de salida y estructura de entrada.
     match format:
         case DatasetFormat.YOLO:
             if not output_dir:
                 logger.debug("No se especificó un directorio de salida, se usará el predeterminado para YOLO")
                 output_dir = DATASET_CONFIG[DatasetFormat.YOLO]["interim_folderpath"]
         case DatasetFormat.HUGGINGFACE:
-            pass  # Formato por defecto
+            # Validar estructura de entrada para HuggingFace
+            if not _validate_eurosat_structure(dataset_path):
+                logger.error(f"La estructura del dataset en {dataset_path} no es compatible con EuroSAT")
+                logger.info("Se esperan subdirectorios con imágenes, ej: AnnualCrop/, Forest/, etc.")
+                raise typer.Exit(1)
         case _:
             logger.error(f"Formato {format} no implementado aún")
             raise typer.Exit(1)
 
-    if not dataset_path.exists():
-        logger.error(f"Dataset path no existe: {dataset_path}")
-        raise typer.Exit(1)
+    # Eliminar datos anteriores si se especifica
+    if delte_previous_data and output_dir.exists():
+        logger.info(f"Eliminando datos anteriores en el directorio de salida: {output_dir}")
+        try:
+            shutil.rmtree(output_dir, ignore_errors=True)
+            logger.info(f"Datos anteriores eliminados: {output_dir}")
+        except Exception as e:
+            logger.warning(f"Error al eliminar los datos anteriores: {e}")
+            raise typer.Exit(1)
 
-    if not output_dir.exists():
-        logger.debug(f"Directorio de salida no existe, se creará: {output_dir}")
-        output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info(f"Convirtiendo dataset a formato {format.value.upper()}")
     logger.info(f"Entrada: {dataset_path}")
@@ -147,11 +185,9 @@ def convert_dataset_to_model_format(
     logger.debug(f"Configuración del formato: {config}")
 
     if format == DatasetFormat.YOLO:
-        # _convert_to_yolo(dataset_path, output_dir)
-        pass
+        _convert_to_yolo(dataset_path, output_dir, summary)
     elif format == DatasetFormat.HUGGINGFACE:
-        pass
-        # _convert_to_huggingface(dataset_path, output_dir)
+        _convert_to_huggingface(dataset_path, output_dir, summary)
     else:
         logger.error(f"Formato {format} no implementado aún")
         raise typer.Exit(1)
@@ -166,42 +202,174 @@ def convert_dataset_to_model_format(
             logger.warning(f"Error al limpiar el directorio de entrada: {e}")
             raise typer.Exit(1)
 
-
-def _convert_to_yolo(input_path: Path, output_path: Path):
-    """Convierte el dataset al formato YOLO"""
-    logger.info("Implementando conversión a YOLO...")
-    # TODO: Implementar lógica específica de YOLO
-    raise NotImplementedError("Conversión a YOLO pendiente de implementar")
-
-
-def _convert_to_huggingface(input_path: Path, output_path: Path):
-    """Convierte el dataset al formato HuggingFace"""
-    logger.info("Implementando conversión a HuggingFace...")
-    # TODO: Implementar lógica específica de HuggingFace
-    raise NotImplementedError("Conversión a HuggingFace pendiente de implementar")
-
-
+# TODO: Probar y documentar la función de división del dataset
+@app.command()
 def split_dataset(
-    format: DatasetFormat = typer.Option(
-        DatasetFormat.HUGGINGFACE, help=f"Formato del dataset. Opciones: {DatasetFormat.list_formats()}"
-    ),
+    format: DatasetFormat = DatasetFormat.HUGGINGFACE,
     dataset_path: Path = DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["interim_folderpath"],
     output_dir: Path = DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["processed_folderpath"],
-    train_ratio: float = 0.8,
+    split: Tuple[float, float, float] = (0.9, 0.1, 0.0),
+    summary: bool = True,
+    clean: bool = True,
 ):
-    """
-    Divide el dataset en conjuntos de entrenamiento y validación.
+    # Validar que exista el directorio de entrada
+    if not dataset_path.exists():
+        logger.error(f"El directorio de entrada no existe: {dataset_path}")
+        raise typer.Exit(1)
 
-    Args:
-        dataset_path: Ruta al dataset procesado
-        output_dir: Directorio de salida para los conjuntos divididos
-        train_ratio: Proporción del conjunto de entrenamiento (0.0 - 1.0)
-    """
-    logger.info(
-        f"Dividiendo el dataset en {train_ratio*100:.2f}% entrenamiento y {100*(1-train_ratio):.2f}% validación"
+    match format:
+        case DatasetFormat.YOLO:
+            if not output_dir:
+                logger.debug("No se especificó un directorio de salida, se usará el predeterminado para YOLO")
+                output_dir = DATASET_CONFIG[DatasetFormat.YOLO]["processed_folderpath"]
+        case DatasetFormat.HUGGINGFACE:
+            # Validar estructura de entrada para HuggingFace
+            if not _validate_huggingface_structure(dataset_path):
+                logger.error(f"La estructura del dataset en {dataset_path} no es compatible con HuggingFace")
+                logger.info("Se espera una estructura que contiene un subdirectorio 'train' con directorios de clases")
+                raise typer.Exit(1)
+        case _:
+            logger.error(f"Formato {format} no implementado aún")
+            raise typer.Exit(1)
+
+    # Normalizar porcentajes
+    total = sum(split)
+    if total != 1.0:
+        logger.error(f"Los porcentajes de división deben sumar 1.0, pero se recibieron: {split}")
+        raise typer.Exit(1)
+
+    _, test_ratio, val_ratio = split
+
+    # Preparar directorio de salida
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Directorio base de entrada
+    source_base_dir = dataset_path / "train"
+
+    class_dirs = [d for d in source_base_dir.iterdir() if d.is_dir()]
+    if not class_dirs:
+        logger.warning(f"No se encontraron subdirectorios de clases en: {source_base_dir}")
+        return
+
+    logger.debug(f"Encontradas {len(class_dirs)} clases: {[d.name for d in class_dirs]}")
+
+    # Contar el total de archivos para la barra de progreso
+    all_files: List[Path] = []
+    labels: List[str] = []
+
+    logger.debug("Escaneando archivos...")
+    for class_dir in class_dirs:
+        for source_file in class_dir.iterdir():
+            if source_file.is_file() and source_file.suffix.lower() in IMAGE_EXTENSIONS:
+                all_files.append(source_file)
+                labels.append(class_dir.name)
+
+    if not all_files:
+        logger.warning(f"No se encontraron archivos de imagen en {source_base_dir}. No hay nada que dividir.")
+        return
+
+    logger.info(f"Total de {len(all_files)} archivos encontrados para dividir.")
+
+    # Realizar el split de train/test inicial
+    files_train, files_test_val, labels_train, labels_test_val = train_test_split(
+        all_files, labels, test_size=(test_ratio + val_ratio), stratify=labels, random_state=RANDOM_SEED
     )
-    #TODO: Implementar la lógica de división del dataset
-    raise NotImplementedError("División del dataset pendiente de implementar")
+
+    # Realizar el split de test/val del conjunto restante si val_ratio es mayor que 0
+    files_test = []
+    files_val = []
+    if val_ratio > 0 and len(files_test_val) > 0:
+        # Calculamos la proporción de validación respecto al total de test_val
+        test_val_ratio_sum = test_ratio + val_ratio
+        if test_val_ratio_sum == 0:  # Evitar división por cero si ambos son 0 (aunque ya validamos la suma total)
+            test_val_ratio_sum = 1  # Solo para evitar el error, no debería darse si sum(split) == 1.0
+        val_proportion_of_test_val = val_ratio / test_val_ratio_sum
+
+        files_test, files_val, labels_test, labels_val = train_test_split(
+            files_test_val,
+            labels_test_val,
+            test_size=val_proportion_of_test_val,
+            stratify=labels_test_val,
+            random_state=42,
+        )
+    else:
+        files_test = files_test_val
+        labels_test = labels_test_val  # Aunque no se usa directamente, mantener la simetría
+
+    splits_to_process = {
+        "train": (files_train, labels_train),
+        "test": (files_test, labels_test),
+        "val": (files_val, labels_val),
+    }
+
+    # Copiar archivos a los directorios de salida
+    copied_files = 0
+    failed_copies = 0
+    total_size = 0
+    for split_name, (files, _) in splits_to_process.items():
+        if not files:
+            logger.info(f"No hay archivos para la división '{split_name}'. Saltando...")
+            continue
+
+        split_dir = output_dir / split_name
+        split_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Copiando {len(files)} archivos al directorio '{split_name}': {split_dir}")
+
+        with tqdm(total=len(files), desc=f"Copiando {split_name} files", unit="archivo") as pbar:
+            for source_file in files:
+                class_name = source_file.parent.name
+                target_class_dir = split_dir / class_name
+                target_class_dir.mkdir(exist_ok=True)
+                target_file = target_class_dir / source_file.name
+                try:
+                    shutil.copy2(source_file, target_file)
+
+                    # Actualizar estadísticas
+                    file_size = source_file.stat().st_size
+                    total_size += file_size
+                    copied_files += 1
+
+                    # Actualizar descripción con estadísticas
+                    pbar.set_postfix(
+                        {
+                            "Copiados": copied_files,
+                            "Fallos": failed_copies,
+                            "Tamaño": f"{total_size / (1024*1024):.1f}MB",
+                        }
+                    )
+                except Exception as e:
+                    failed_copies += 1
+                    logger.warning(f"Error al copiar {source_file} a {target_file}: {e}")
+
+                    # Actualizar descripción con estadísticas
+                    pbar.set_postfix(
+                        {
+                            "Copiados": copied_files,
+                            "Fallos": failed_copies,
+                            "Tamaño": f"{total_size / (1024*1024):.1f}MB",
+                        }
+                    )
+                finally:
+                    pbar.update(1)
+
+    # Crear archivo de resumen
+    if summary:
+        _create_split_summary(dataset_path, output_dir, splits_to_process, copied_files, failed_copies, total_size)
+
+    if failed_copies > 0:
+        logger.warning(f"División completada con {failed_copies} errores de {copied_files} archivos")
+    else:
+        logger.success(f"División completada exitosamente: {copied_files} archivos copiados")
+
+    # Limpiar el directorio original si clean es True
+    if clean:
+        logger.info(f"Limpiando directorio original: {dataset_path}")
+        try:
+            shutil.rmtree(dataset_path)
+            logger.success(f"Directorio original limpiado: {dataset_path}")
+        except Exception as e:
+            logger.error(f"Error al limpiar el directorio original {dataset_path}: {e}")
+            raise typer.Exit(1)
 
 
 def load_huggingface_dataset():
@@ -214,6 +382,242 @@ def load_huggingface_dataset():
     logger.info("Cargando el dataset procesado...")
     # TODO: Implementar la lógica de carga del dataset
     raise NotImplementedError("Carga del dataset pendiente de implementar")
+
+
+def _convert_to_yolo(input_path: Path, output_path: Path):
+    """Convierte el dataset al formato YOLO"""
+    logger.info("Implementando conversión a YOLO...")
+    # TODO: Implementar lógica específica de YOLO
+    raise NotImplementedError("Conversión a YOLO pendiente de implementar")
+
+
+def _convert_to_huggingface(input_path: Path, output_path: Path, summary: bool = True):
+    """
+    Convierte el dataset al formato compatible con HuggingFace.
+
+    El formato de los archivos de entrada para EuroSAT_RGB es:
+    EuroSAT_RGB
+    ├── AnnualCrop
+    │   ├── AnnualCrop_1.jpg
+    │   ├── AnnualCrop_2.jpg
+    │   └── ...
+    ├── Forest
+    │   └── ...
+    └── ...
+
+    El objetivo es convertir estos datos a un formato:
+    EuroSAT_RGB_huggingface
+    └── train
+        ├── AnnualCrop
+        │   ├── AnnualCrop_1.jpg
+        │   ├── AnnualCrop_2.jpg
+        │   └── ...
+        ├── Forest
+        │   └── ...
+        └── ...
+
+    En este caso, simplemente se crea una estructura de directorios similar a la original.
+
+    Args:
+        input_path (Path): Ruta al directorio con los datos de entrada a convertir.
+        output_path (Path): Ruta al directorio donde se guardarán los datos convertidos.
+
+    Raises:
+        FileNotFoundError: Si el directorio de entrada no existe.
+        PermissionError: Si no hay permisos para crear/escribir en el directorio de salida.
+    """
+    logger.info("Iniciando conversión a formato HuggingFace...")
+
+    if not input_path.exists():
+        raise FileNotFoundError(f"El directorio de entrada no existe: {input_path}")
+
+    # Crear directorio train dentro del output_path
+    train_dir = output_path / "train"
+    train_dir.mkdir(parents=True, exist_ok=True)
+
+    # Obtener todas las carpetas de clases (subdirectorios del input_path)
+    class_dirs = [d for d in input_path.iterdir() if d.is_dir()]
+
+    if not class_dirs:
+        logger.warning(f"No se encontraron subdirectorios de clases en: {input_path}")
+        return
+
+    logger.debug(f"Encontradas {len(class_dirs)} clases: {[d.name for d in class_dirs]}")
+
+    # Contar el total de archivos para la barra de progreso
+    total_files = 0
+    files_to_copy: List[Tuple[Path, Path]] = []
+
+    logger.debug("Escaneando archivos...")
+    for class_dir in class_dirs:
+        # Crear directorio de clase en destino
+        target_class_dir = train_dir / class_dir.name
+        target_class_dir.mkdir(exist_ok=True)
+
+        # Buscar archivos de imagen (extensiones comunes)
+        for file_path in class_dir.iterdir():
+            if file_path.is_file() and file_path.suffix.lower() in IMAGE_EXTENSIONS:
+                target_file_path = target_class_dir / file_path.name
+                files_to_copy.append((file_path, target_file_path))
+                total_files += 1
+
+    if total_files == 0:
+        logger.warning("No se encontraron archivos de imagen para copiar")
+        return
+
+    logger.info(f"Iniciando copia de {total_files} archivos...")
+
+    # Copiar archivos con barra de progreso
+    copied_files = 0
+    failed_copies = 0
+    total_size = 0
+
+    with tqdm(total=total_files, desc="Copiando archivos", unit="archivo", unit_scale=False) as pbar:
+        for source_file, target_file in files_to_copy:
+            try:
+                # Copiar archivo manteniendo metadatos
+                shutil.copy2(source_file, target_file)
+
+                # Actualizar estadísticas
+                file_size = source_file.stat().st_size
+                total_size += file_size
+                copied_files += 1
+
+                # Actualizar descripción con estadísticas
+                pbar.set_postfix(
+                    {"Copiados": copied_files, "Fallos": failed_copies, "Tamaño": f"{total_size / (1024*1024):.1f}MB"}
+                )
+            except Exception as e:
+                failed_copies += 1
+                logger.warning(f"Error copiando {source_file.name}: {e}")
+
+                # Actualizar descripción con estadísticas
+                pbar.set_postfix(
+                    {"Copiados": copied_files, "Fallos": failed_copies, "Tamaño": f"{total_size / (1024*1024):.1f}MB"}
+                )
+            finally:
+                pbar.update(1)
+
+    # Crear archivo de resumen
+    if summary:
+        _create_dataset_summary(output_path, train_dir, total_files, copied_files, failed_copies, total_size)
+
+    # Log final
+    if failed_copies > 0:
+        logger.warning(f"Conversión completada con {failed_copies} errores de {total_files} archivos")
+    else:
+        logger.success(f"Conversión completada exitosamente: {copied_files} archivos copiados")
+
+    logger.info(f"Tamaño total del dataset: {total_size / (1024*1024):.2f} MB")
+    logger.info(f"Estructura creada en: {train_dir}")
+
+
+def _create_dataset_summary(
+    output_path: Path, train_dir: Path, total_files: int, copied_files: int, failed_copies: int, total_size: int
+):
+    """
+    Crea un archivo de resumen del dataset convertido.
+
+    Args:
+        output_path: Directorio de salida principal
+        train_dir: Directorio train creado
+        total_files: Total de archivos procesados
+        copied_files: Archivos copiados exitosamente
+        failed_copies: Archivos que fallaron al copiar
+        total_size: Tamaño total en bytes
+    """
+    summary_file = output_path / "dataset_info.txt"
+
+    # Obtener información de clases
+    class_info = {}
+    for class_dir in train_dir.iterdir():
+        if class_dir.is_dir():
+            image_count = len([f for f in class_dir.iterdir() if f.is_file()])
+            class_info[class_dir.name] = image_count
+
+    # Escribir resumen
+    with open(summary_file, "w", encoding="utf-8") as f:
+        f.write("=== RESUMEN DEL DATASET HUGGINGFACE ===\n\n")
+        f.write(f"Archivos totales procesados: {total_files}\n")
+        f.write(f"Archivos copiados exitosamente: {copied_files}\n")
+        f.write(f"Archivos fallidos: {failed_copies}\n")
+        f.write(f"Tamaño total: {total_size / (1024*1024):.2f} MB\n\n")
+
+        f.write("=== DISTRIBUCIÓN POR CLASES ===\n")
+        for class_name, count in sorted(class_info.items()):
+            f.write(f"{class_name}: {count} imágenes\n")
+
+        f.write(f"\n=== ESTRUCTURA DE DIRECTORIOS ===\n")
+        f.write(f"train/\n")
+        for class_name in sorted(class_info.keys()):
+            f.write(f"├── {class_name}/\n")
+        f.write("\n")
+
+    logger.info(f"Resumen del dataset guardado en: {summary_file}")
+
+
+# Función auxiliar para validar la estructura de entrada
+def _validate_eurosat_structure(input_path: Path) -> bool:
+    """
+    Valida que la estructura de entrada sea la esperada, o sea:
+    EuroSAT_RGB
+    ├── AnnualCrop
+    │   ├── AnnualCrop_1.jpg
+    │   ├── AnnualCrop_2.jpg
+    │   └── ...
+    ├── Forest
+    │   └── ...
+    └── ...
+
+    Args:
+        input_path: Directorio a validar
+
+    Returns:
+        True si la estructura es válida
+    """
+    if not input_path.exists() or not input_path.is_dir():
+        return False
+
+    # Verificar que hay subdirectorios
+    subdirs = [d for d in input_path.iterdir() if d.is_dir()]
+    if not subdirs:
+        return False
+
+    # Verificar que cada subdirectorio contenga al menos un archivo de imagen
+    for subdir in subdirs:
+        image_files = [f for f in subdir.iterdir() if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS]
+        if image_files:
+            return True
+
+    return False
+
+
+def _validate_huggingface_structure(dataset_path):
+    raise NotImplementedError
+
+
+def _create_split_summary(dataset_path, output_path, splits_to_process, copied_files, failed_copies, total_size):
+    previous_summary_file = dataset_path / "dataset_info.txt"
+    summary_file_target = output_path / "dataset_info.txt"
+
+    if previous_summary_file.exists():
+        with open(previous_summary_file, "a", encoding="utf-8") as f:
+            _write_split_summary(splits_to_process, copied_files, failed_copies, total_size, f)
+        # Copiar el resumen al directorio de salida
+        shutil.copy(previous_summary_file, summary_file_target)
+    else:
+        with open(summary_file_target, "w", encoding="utf-8") as f:
+            _write_split_summary(splits_to_process, copied_files, failed_copies, total_size, f)
+
+    logger.info(f"Resumen del dataset guardado en: {summary_file_target}")
+
+
+def _write_split_summary(splits_to_process, copied_files, failed_copies, total_size, f):
+    f.write("=== RESUMEN DE LA DIVISIÓN DEL DATASET ===\n\n")
+    f.write(f"Archivos totales procesados: {sum(len(files) for files, _ in splits_to_process.values())}\n")
+    f.write(f"Archivos copiados exitosamente: {copied_files}\n")
+    f.write(f"Archivos fallidos: {failed_copies}\n")
+    f.write(f"Tamaño total: {total_size / (1024*1024):.2f} MB\n\n")
 
 
 if __name__ == "__main__":

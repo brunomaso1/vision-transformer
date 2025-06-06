@@ -17,6 +17,7 @@ logger.info(f"PROJ_ROOT path is: {PROJ_ROOT}")
 # Environment
 ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
 logger.info(f"Actual environment is: {ENVIRONMENT}")
+RANDOM_SEED = 42
 
 # Folders
 DATA_DIR = PROJ_ROOT / "data"
@@ -55,6 +56,8 @@ DATASET_CONFIG = {
         "structure": "datasets",
     },
 }
+
+IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif'}
 
 # Error handling
 if not DATA_RAW_URL:
