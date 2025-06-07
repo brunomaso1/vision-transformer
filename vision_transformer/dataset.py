@@ -124,7 +124,7 @@ def convert_dataset_to_model_format(
     dataset_path: Path = RAW_DATA_EXTRACTION_DIR,
     output_dir: Path = DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["interim_folderpath"],
     summary: bool = True,
-    delte_previous_data: bool = True,
+    delete_previous_data: bool = True,
     clean: bool = False,
 ):
     """
@@ -167,7 +167,7 @@ def convert_dataset_to_model_format(
             raise typer.Exit(1)
 
     # Eliminar datos anteriores si se especifica
-    if delte_previous_data and output_dir.exists():
+    if delete_previous_data and output_dir.exists():
         logger.info(f"Eliminando datos anteriores en el directorio de salida: {output_dir}")
         try:
             shutil.rmtree(output_dir, ignore_errors=True)
@@ -247,7 +247,7 @@ def split_dataset(
                 output_dir = DATASET_CONFIG[DatasetFormat.YOLO]["processed_folderpath"]
         case DatasetFormat.HUGGINGFACE:
             # Validar estructura de entrada para HuggingFace
-            if not _validate_huggingface_iterim_structure(dataset_path):
+            if not _validate_huggingface_interim_structure(dataset_path):
                 logger.error(f"La estructura del dataset en {dataset_path} no es compatible con HuggingFace")
                 logger.info("Se espera una estructura que contiene un subdirectorio 'train' con directorios de clases")
                 raise typer.Exit(1)
@@ -691,7 +691,7 @@ def _validate_eurosat_structure(input_path: Path) -> bool:
     return False
 
 
-def _validate_huggingface_iterim_structure(dataset_path: Path) -> bool:
+def _validate_huggingface_interim_structure(dataset_path: Path) -> bool:
     """
     Valida que la estructura del dataset sea la siguiente:
     EuroSAT_RGB_huggingface
