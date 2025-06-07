@@ -1,12 +1,14 @@
 import zipfile, requests, shutil
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from sklearn.model_selection import train_test_split
 
 from loguru import logger
 from tqdm import tqdm
 import typer
+
+from datasets import Dataset, load_dataset
 
 from vision_transformer.config import (
     DATA_RAW_FILE_ZIP,
@@ -202,7 +204,7 @@ def convert_dataset_to_model_format(
             logger.warning(f"Error al limpiar el directorio de entrada: {e}")
             raise typer.Exit(1)
 
-# TODO: Probar y documentar la función de división del dataset
+
 @app.command()
 def split_dataset(
     format: DatasetFormat = DatasetFormat.HUGGINGFACE,
@@ -212,6 +214,27 @@ def split_dataset(
     summary: bool = True,
     clean: bool = True,
 ):
+    """
+    Divide un dataset en conjuntos de entrenamiento, prueba y validación según el formato especificado.
+
+    Args:
+        format (DatasetFormat, optional): Formato del dataset a dividir. Por defecto es DatasetFormat.HUGGINGFACE.
+        dataset_path (Path, optional): Ruta al directorio de entrada con los datos a dividir. Por defecto es DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["interim_folderpath"].
+        output_dir (Path, optional): Ruta al directorio donde se guardarán los datos divididos. Por defecto es DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["processed_folderpath"].
+        split (Tuple[float, float, float], optional): Proporciones para train, test y val. Deben sumar 1.0. Por defecto es (0.9, 0.1, 0.0).
+        summary (bool, optional): Si es True, genera un archivo de resumen del dataset dividido. Por defecto es True.
+        clean (bool, optional): Si es True, elimina el directorio de entrada después de la división. Por defecto es True.
+
+    Raises:
+        typer.Exit: Si el directorio de entrada no existe.
+        typer.Exit: Si la estructura del dataset no es compatible con el formato seleccionado.
+        typer.Exit: Si los porcentajes de división no suman 1.0.
+        typer.Exit: Si ocurre un error al eliminar el directorio original.
+        typer.Exit: Si el formato solicitado no está implementado.
+
+    Ejecución de ejemplo:
+        >>> python -m vision_transformer.dataset split-dataset --help
+    """
     # Validar que exista el directorio de entrada
     if not dataset_path.exists():
         logger.error(f"El directorio de entrada no existe: {dataset_path}")
@@ -224,7 +247,7 @@ def split_dataset(
                 output_dir = DATASET_CONFIG[DatasetFormat.YOLO]["processed_folderpath"]
         case DatasetFormat.HUGGINGFACE:
             # Validar estructura de entrada para HuggingFace
-            if not _validate_huggingface_structure(dataset_path):
+            if not _validate_huggingface_iterim_structure(dataset_path):
                 logger.error(f"La estructura del dataset en {dataset_path} no es compatible con HuggingFace")
                 logger.info("Se espera una estructura que contiene un subdirectorio 'train' con directorios de clases")
                 raise typer.Exit(1)
@@ -238,7 +261,7 @@ def split_dataset(
         logger.error(f"Los porcentajes de división deben sumar 1.0, pero se recibieron: {split}")
         raise typer.Exit(1)
 
-    _, test_ratio, val_ratio = split
+    train_ratio, test_ratio, val_ratio = split
 
     # Preparar directorio de salida
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -270,37 +293,58 @@ def split_dataset(
 
     logger.info(f"Total de {len(all_files)} archivos encontrados para dividir.")
 
-    # Realizar el split de train/test inicial
-    files_train, files_test_val, labels_train, labels_test_val = train_test_split(
-        all_files, labels, test_size=(test_ratio + val_ratio), stratify=labels, random_state=RANDOM_SEED
-    )
-
-    # Realizar el split de test/val del conjunto restante si val_ratio es mayor que 0
-    files_test = []
-    files_val = []
-    if val_ratio > 0 and len(files_test_val) > 0:
-        # Calculamos la proporción de validación respecto al total de test_val
-        test_val_ratio_sum = test_ratio + val_ratio
-        if test_val_ratio_sum == 0:  # Evitar división por cero si ambos son 0 (aunque ya validamos la suma total)
-            test_val_ratio_sum = 1  # Solo para evitar el error, no debería darse si sum(split) == 1.0
-        val_proportion_of_test_val = val_ratio / test_val_ratio_sum
-
-        files_test, files_val, labels_test, labels_val = train_test_split(
-            files_test_val,
-            labels_test_val,
-            test_size=val_proportion_of_test_val,
-            stratify=labels_test_val,
-            random_state=42,
+    if train_ratio == 1.0:
+        logger.warning(
+            "Solo se ha especificado un conjunto de entrenamiento. No se realizará división. Simplemente se copiarán los archivos al directorio de salida."
         )
+        files_train = all_files
+        labels_train = labels
     else:
-        files_test = files_test_val
-        labels_test = labels_test_val  # Aunque no se usa directamente, mantener la simetría
+        logger.info(
+            f"Dividiendo el dataset en train: {train_ratio*100}%, test: {test_ratio*100}%, val: {val_ratio*100}%"
+        )
+        # Realizar el split de train/test inicial
+        files_train, files_test_val, labels_train, labels_test_val = train_test_split(
+            all_files, labels, test_size=(test_ratio + val_ratio), stratify=labels, random_state=RANDOM_SEED
+        )
 
-    splits_to_process = {
-        "train": (files_train, labels_train),
-        "test": (files_test, labels_test),
-        "val": (files_val, labels_val),
-    }
+        # Realizar el split de test/val del conjunto restante si val_ratio es mayor que 0
+        files_test = []
+        files_val = []
+        if val_ratio > 0 and len(files_test_val) > 0:
+            # Calculamos la proporción de validación respecto al total de test_val
+            test_val_ratio_sum = test_ratio + val_ratio
+            if test_val_ratio_sum == 0:  # Evitar división por cero si ambos son 0 (aunque ya validamos la suma total)
+                test_val_ratio_sum = 1  # Solo para evitar el error, no debería darse si sum(split) == 1.0
+            val_proportion_of_test_val = val_ratio / test_val_ratio_sum
+
+            files_test, files_val, labels_test, labels_val = train_test_split(
+                files_test_val,
+                labels_test_val,
+                test_size=val_proportion_of_test_val,
+                stratify=labels_test_val,
+                random_state=42,
+            )
+        else:
+            files_test = files_test_val
+            labels_test = labels_test_val  # Aunque no se usa directamente, mantener la simetría
+
+    # Determinar qué splits procesar según los ratios
+    if train_ratio == 0:
+        splits_to_process = {
+            "train": (files_train, labels_train),
+        }
+    elif val_ratio > 0:
+        splits_to_process = {
+            "train": (files_train, labels_train),
+            "test": (files_test, labels_test),
+            "val": (files_val, labels_val),
+        }
+    else:
+        splits_to_process = {
+            "train": (files_train, labels_train),
+            "test": (files_test, labels_test),
+        }
 
     # Copiar archivos a los directorios de salida
     copied_files = 0
@@ -372,16 +416,24 @@ def split_dataset(
             raise typer.Exit(1)
 
 
-def load_huggingface_dataset():
-    """
-    Carga el dataset procesado y lo prepara para su uso.
-
-    Returns:
-        Dataset: El dataset cargado y preparado.
-    """
+def load_huggingface_dataset(
+    dataset_path: Path = DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["processed_folderpath"],
+) -> Dataset:
     logger.info("Cargando el dataset procesado...")
-    # TODO: Implementar la lógica de carga del dataset
-    raise NotImplementedError("Carga del dataset pendiente de implementar")
+    if not dataset_path.exists() or not dataset_path.is_dir():
+        raise FileNotFoundError(f"El directorio del dataset no existe: {dataset_path}")
+
+    result, only_train = _validate_huggingface_structure(dataset_path)
+    if not result:
+        raise ValueError(f"La estructura del dataset en {dataset_path} no es compatible con HuggingFace")
+
+    if only_train:
+        logger.info("El dataset solo contiene el conjunto de entrenamiento. Cargando...")
+        return load_dataset(str(dataset_path), split="train")
+    else:
+        logger.info("El dataset contiene múltiples conjuntos (train, test, val). Cargando todos...")
+        # Cargar el dataset completo, incluyendo train, test y val
+        return load_dataset(str(dataset_path))
 
 
 def _convert_to_yolo(input_path: Path, output_path: Path):
@@ -512,6 +564,180 @@ def _convert_to_huggingface(input_path: Path, output_path: Path, summary: bool =
     logger.info(f"Estructura creada en: {train_dir}")
 
 
+def _validate_huggingface_structure(dataset_path: Path) -> Tuple[bool, bool]:
+    """Valida que la estructura del dataset sea compatible con HuggingFace, o sea:
+    EuroSAT_RGB_huggingface
+    ├── train
+    │    ├── AnnualCrop
+    │    │   ├── AnnualCrop_1.jpg
+    │    │   ├── AnnualCrop_2.jpg
+    │    │   └── ...
+    │    ├── Forest
+    │    │   └── ...
+    │    ├── ...
+    ├── test
+    │    ├── ...
+    │    └── ...
+    └── val
+         └── ...
+
+    Puede tener solo el conjunto de entrenamiento, en cuyo caso no habrá subdirectorios de test o val.
+    La función verifica que:
+      - El directorio existe y es un directorio.
+      - Contiene un subdirectorio 'train'.
+      - 'train' contiene al menos un subdirectorio de clase.
+      - Cada subdirectorio de clase contiene al menos un archivo de imagen válido.
+
+    Args:
+        dataset_path (Path): Ruta al directorio raíz del dataset a validar.
+
+    Returns:
+        Tuple[bool, bool]:
+            - True si la estructura es válida, False en caso contrario.
+            - True si solo tiene el conjunto de entrenamiento, False si también tiene test o val.
+    """
+    if not dataset_path.exists() or not dataset_path.is_dir():
+        return False, False
+
+    # Verificar que exista el subdirectorio 'train'
+    train_dir = dataset_path / "train"
+    if not train_dir.exists() or not train_dir.is_dir():
+        return False, False
+
+    # Verificar que haya al menos un subdirectorio de clase en 'train'
+    class_dirs = [d for d in train_dir.iterdir() if d.is_dir()]
+    if not class_dirs:
+        return False, True  # Solo tiene el conjunto de entrenamiento
+
+    # Verificar que cada subdirectorio de clase contenga al menos un archivo de imagen
+    for class_dir in class_dirs:
+        image_files = [f for f in class_dir.iterdir() if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS]
+        if not image_files:
+            return False, False
+
+    # Verificar si existen los subdirectorios 'test' y 'val'
+    has_test = (dataset_path / "test").exists()
+    has_val = (dataset_path / "val").exists()
+
+    if has_test and not (dataset_path / "test").is_dir():
+        return False, False
+    if has_val and not (dataset_path / "val").is_dir():
+        return False, False
+
+    if has_test:
+        test_dir = dataset_path / "test"
+        if not test_dir.exists() or not test_dir.is_dir():
+            return False, False
+        # Verificar que haya al menos un subdirectorio de clase en 'test'
+        test_class_dirs = [d for d in test_dir.iterdir() if d.is_dir()]
+        if not test_class_dirs:
+            return False, False
+        # Verificar que cada subdirectorio de clase contenga al menos un archivo de imagen
+        for class_dir in test_class_dirs:
+            image_files = [f for f in class_dir.iterdir() if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS]
+            if not image_files:
+                return False, False
+
+    if has_val:
+        val_dir = dataset_path / "val"
+        if not val_dir.exists() or not val_dir.is_dir():
+            return False, False
+        # Verificar que haya al menos un subdirectorio de clase en 'val'
+        val_class_dirs = [d for d in val_dir.iterdir() if d.is_dir()]
+        if not val_class_dirs:
+            return False, False
+        # Verificar que cada subdirectorio de clase contenga al menos un archivo de imagen
+        for class_dir in val_class_dirs:
+            image_files = [f for f in class_dir.iterdir() if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS]
+            if not image_files:
+                return False, False
+
+    return True, not has_test and not has_val
+
+
+# Función auxiliar para validar la estructura de entrada
+def _validate_eurosat_structure(input_path: Path) -> bool:
+    """
+    Valida que la estructura de entrada sea la esperada, o sea:
+    EuroSAT_RGB
+    ├── AnnualCrop
+    │   ├── AnnualCrop_1.jpg
+    │   ├── AnnualCrop_2.jpg
+    │   └── ...
+    ├── Forest
+    │   └── ...
+    └── ...
+
+    Args:
+        input_path: Directorio a validar
+
+    Returns:
+        True si la estructura es válida
+    """
+    if not input_path.exists() or not input_path.is_dir():
+        return False
+
+    # Verificar que hay subdirectorios
+    subdirs = [d for d in input_path.iterdir() if d.is_dir()]
+    if not subdirs:
+        return False
+
+    # Verificar que cada subdirectorio contenga al menos un archivo de imagen
+    for subdir in subdirs:
+        image_files = [f for f in subdir.iterdir() if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS]
+        if image_files:
+            return True
+
+    return False
+
+
+def _validate_huggingface_iterim_structure(dataset_path: Path) -> bool:
+    """
+    Valida que la estructura del dataset sea la siguiente:
+    EuroSAT_RGB_huggingface
+    └── train
+        ├── AnnualCrop
+        │   ├── AnnualCrop_1.jpg
+        │   ├── AnnualCrop_2.jpg
+        │   └── ...
+        ├── Forest
+        │   └── ...
+        └── ...
+
+    La función verifica que:
+      - El directorio existe y es un directorio.
+      - Contiene un subdirectorio 'train'.
+      - 'train' contiene al menos un subdirectorio de clase.
+      - Cada subdirectorio de clase contiene al menos un archivo de imagen válido.
+
+    Returns:
+        bool: True si la estructura es válida, False en caso contrario.
+
+    Args:
+        dataset_path (Path): Ruta al directorio raíz del dataset a validar.
+    """
+    if not dataset_path.exists() or not dataset_path.is_dir():
+        return False
+
+    # Verificar que exista el subdirectorio 'train'
+    train_dir = dataset_path / "train"
+    if not train_dir.exists() or not train_dir.is_dir():
+        return False
+
+    # Verificar que haya al menos un subdirectorio de clase en 'train'
+    class_dirs = [d for d in train_dir.iterdir() if d.is_dir()]
+    if not class_dirs:
+        return False
+
+    # Verificar que cada subdirectorio de clase contenga al menos un archivo de imagen
+    for class_dir in class_dirs:
+        image_files = [f for f in class_dir.iterdir() if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS]
+        if not image_files:
+            return False
+
+    return True
+
+
 def _create_dataset_summary(
     output_path: Path, train_dir: Path, total_files: int, copied_files: int, failed_copies: int, total_size: int
 ):
@@ -556,47 +782,28 @@ def _create_dataset_summary(
     logger.info(f"Resumen del dataset guardado en: {summary_file}")
 
 
-# Función auxiliar para validar la estructura de entrada
-def _validate_eurosat_structure(input_path: Path) -> bool:
+def _create_split_summary(
+    dataset_path: Path,
+    output_path: Path,
+    splits_to_process: Dict[str, Any],
+    copied_files: int,
+    failed_copies: int,
+    total_size: int,
+) -> None:
     """
-    Valida que la estructura de entrada sea la esperada, o sea:
-    EuroSAT_RGB
-    ├── AnnualCrop
-    │   ├── AnnualCrop_1.jpg
-    │   ├── AnnualCrop_2.jpg
-    │   └── ...
-    ├── Forest
-    │   └── ...
-    └── ...
+    Crea un archivo de resumen para la división del dataset en los conjuntos especificados (train, test, val).
 
     Args:
-        input_path: Directorio a validar
+        dataset_path (Path): Ruta al directorio original del dataset antes de la división.
+        output_path (Path): Ruta al directorio donde se guardará el resumen de la división.
+        splits_to_process (dict): Diccionario con los splits a procesar y sus archivos, ej: {"train": ([files], [labels]), ...}.
+        copied_files (int): Número de archivos copiados exitosamente.
+        failed_copies (int): Número de archivos que fallaron al copiarse.
+        total_size (int): Tamaño total en bytes de los archivos copiados.
 
     Returns:
-        True si la estructura es válida
+        None
     """
-    if not input_path.exists() or not input_path.is_dir():
-        return False
-
-    # Verificar que hay subdirectorios
-    subdirs = [d for d in input_path.iterdir() if d.is_dir()]
-    if not subdirs:
-        return False
-
-    # Verificar que cada subdirectorio contenga al menos un archivo de imagen
-    for subdir in subdirs:
-        image_files = [f for f in subdir.iterdir() if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS]
-        if image_files:
-            return True
-
-    return False
-
-
-def _validate_huggingface_structure(dataset_path):
-    raise NotImplementedError
-
-
-def _create_split_summary(dataset_path, output_path, splits_to_process, copied_files, failed_copies, total_size):
     previous_summary_file = dataset_path / "dataset_info.txt"
     summary_file_target = output_path / "dataset_info.txt"
 
@@ -612,7 +819,26 @@ def _create_split_summary(dataset_path, output_path, splits_to_process, copied_f
     logger.info(f"Resumen del dataset guardado en: {summary_file_target}")
 
 
-def _write_split_summary(splits_to_process, copied_files, failed_copies, total_size, f):
+def _write_split_summary(
+    splits_to_process: Dict[str, Any],
+    copied_files: int,
+    failed_copies: int,
+    total_size: int,
+    f,
+) -> None:
+    """
+    Escribe un resumen de la división del dataset en el archivo proporcionado.
+
+    Args:
+        splits_to_process (Dict[str, Tuple[List[Any], List[Any]]]): Diccionario con los splits a procesar y sus archivos, ej: {"train": ([files], [labels]), ...}.
+        copied_files (int): Número de archivos copiados exitosamente.
+        failed_copies (int): Número de archivos que fallaron al copiarse.
+        total_size (int): Tamaño total en bytes de los archivos copiados.
+        f: Archivo abierto en modo escritura donde se escribirá el resumen.
+
+    Returns:
+        None
+    """
     f.write("=== RESUMEN DE LA DIVISIÓN DEL DATASET ===\n\n")
     f.write(f"Archivos totales procesados: {sum(len(files) for files, _ in splits_to_process.values())}\n")
     f.write(f"Archivos copiados exitosamente: {copied_files}\n")
