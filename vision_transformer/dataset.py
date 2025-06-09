@@ -1,4 +1,4 @@
-import zipfile, requests, shutil
+import zipfile, requests, shutil, os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -49,6 +49,10 @@ def download_raw_data(url: str = DATA_RAW_URL, chunk_size: int = 65_536):
 
         total_size = int(response.headers.get("content-length", 0))  # Get total size of the file, if available
         filename = RAW_DATA_DIR / DATA_RAW_FILE_ZIP
+
+        if not os.path.exists(RAW_DATA_DIR):
+            os.makedirs(RAW_DATA_DIR)
+
         with open(filename, "wb") as file:
             # Configure tqdm progress bar if total size is known
             if total_size > 0:
