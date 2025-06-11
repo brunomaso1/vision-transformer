@@ -186,3 +186,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Pipfiles
+Pipfile
+Pipfile.lock
+
+# Outdated files
+*/outdated
