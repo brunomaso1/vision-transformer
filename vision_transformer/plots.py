@@ -92,12 +92,7 @@ def plot_class_distribution(dataset, id2label, split="train"):
     """
     counts = Counter(dataset[split]["label"])
 
-    df = pd.DataFrame(
-        [
-            {"class": f"{idx}: {name}", "count": counts.get(idx, 0)}
-            for idx, name in id2label.items()
-        ]
-    )
+    df = pd.DataFrame([{"class": f"{idx}: {name}", "count": counts.get(idx, 0)} for idx, name in id2label.items()])
     df = df.sort_values(by=["count", "class"], ascending=[True, False])
 
     ax = df.plot.barh(x="class", y="count", figsize=(6, 4), legend=False)
@@ -124,7 +119,7 @@ def _compute_class_histograms(dataset, id2label, split="train"):
     class_histograms = {}
 
     y = np.array(dataset[split]["label"])
-    for label_id, label_name in id2label.items():        
+    for label_id, label_name in id2label.items():
         imgs_idx = np.where(y == label_id)[0]
 
         # Accumulate histograms per channel
@@ -150,13 +145,13 @@ def _compute_class_histograms(dataset, id2label, split="train"):
 
 def _get_colormap_bar_colors(channel, bins=256):
     """Return a list of RGB colors representing the channel values visually."""
-    if channel == 'H':  # Hue (0–179 in OpenCV HLS, but assuming 0–255 here)
+    if channel == "H":  # Hue (0–179 in OpenCV HLS, but assuming 0–255 here)
         hsv = np.stack([np.linspace(0, 179, bins), np.full(bins, 255), np.full(bins, 255)], axis=1).astype(np.uint8)
         rgb = cv2.cvtColor(hsv.reshape(-1, 1, 3), cv2.COLOR_HSV2RGB).reshape(-1, 3)
-    elif channel == 'S':  # Saturation
+    elif channel == "S":  # Saturation
         hsv = np.stack([np.full(bins, 0), np.linspace(0, 255, bins), np.full(bins, 200)], axis=1).astype(np.uint8)
         rgb = cv2.cvtColor(hsv.reshape(-1, 1, 3), cv2.COLOR_HSV2RGB).reshape(-1, 3)
-    elif channel == 'L':  # Lightness
+    elif channel == "L":  # Lightness
         rgb = np.stack([np.linspace(0, 255, bins)] * 3, axis=1)
     else:
         raise ValueError(f"Invalid channel: {channel}")
@@ -166,11 +161,11 @@ def _get_colormap_bar_colors(channel, bins=256):
 def plot_class_histograms(dataset, id2label, split="train"):
     class_histograms = _compute_class_histograms(dataset, id2label, split)
 
-    channel_bins = {'H': 180, 'S': 256, 'L': 256}
+    channel_bins = {"H": 180, "S": 256, "L": 256}
 
     class_names = list(class_histograms.keys())
-    channel_names = ['H', 'S', 'L']
-    full_titles = ['Hue', 'Saturation', 'Lightness']
+    channel_names = ["H", "S", "L"]
+    full_titles = ["Hue", "Saturation", "Lightness"]
 
     num_classes = len(class_names)
     fig, axes = plt.subplots(num_classes, 3, figsize=(9, num_classes * 1), sharex=True, sharey=False)
