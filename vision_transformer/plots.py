@@ -1,7 +1,7 @@
 from collections import Counter
 import math
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import cv2
 from PIL import Image
@@ -12,8 +12,17 @@ import numpy as np
 from tqdm import tqdm
 import typer
 
+import plotly.graph_objects as go
+import plotly.figure_factory as ff
+import pandas as pd
+from pathlib import Path
+
 from vision_transformer.config import DATASET_CONFIG, FIGURES_DIR, PROCESSED_DATA_DIR
 from vision_transformer.utils import DatasetFormat
+
+from sklearn.metrics import confusion_matrix
+import numpy as np
+import matplotlib.pyplot as plt
 
 app = typer.Typer()
 
@@ -204,6 +213,103 @@ def plot_class_histograms(dataset, id2label, split="train"):
     plt.subplots_adjust(top=0.93)
     fig.suptitle("Histograma acumulado por clase para los canales HSL", fontsize=16)
     plt.show()
+
+
+def plot_metric(
+    df: pd.DataFrame,
+    x_col: str,
+    y_cols: List[str],
+    title: str,
+    filename: str,
+    dirpath: Path = FIGURES_DIR,
+    y_labels: List[str] = None,
+) -> None:
+    """
+    Grafica métricas en función de una columna específica del DataFrame.
+
+    Args:
+        df (pd.DataFrame): DataFrame que contiene los datos a graficar.
+        x_col (str): Nombre de la columna que se usará como eje X.
+        y_cols (List[str]): Lista de nombres de columnas que se graficarán en el eje Y.
+        title (str): Título del gráfico.
+        filename (str): Nombre del archivo para guardar el gráfico.
+        dirpath (Path, optional): Directorio donde se guardará el gráfico. Por defecto es FIGURES_DIR.
+        y_labels (List[str], optional): Lista de etiquetas para las métricas en el gráfico. Por defecto es None.
+
+    Ejemplo de uso:
+        >>> df = pd.DataFrame({
+        ...    "epoch": [1, 2, 3, 4],
+        ...    "accuracy": [0.8, 0.85, 0.9, 0.92],
+        ...    "loss": [0.5, 0.4, 0.3, 0.2]
+        ... })
+        >>> plot_metric(
+        ...    df=df,
+        ...    x_col="epoch",
+        ...    y_cols=["accuracy", "loss"],
+        ...    title="Curvas de Métricas",
+        ...    filename="metric_curves",
+        ...    y_labels=["Precisión", "Pérdida"]
+        ... )
+    """
+    fig = go.Figure()
+
+    for i, y_col in enumerate(y_cols):
+        fig.add_trace(
+            go.Scatter(x=df[x_col], y=df[y_col], mode="lines+markers", name=y_labels[i] if y_labels else y_col)
+        )
+
+    fig.update_layout(
+        title=title, xaxis_title=x_col, yaxis_title="Valor", legend_title="Métrica", template="plotly_white"
+    )
+
+    fig.show()
+
+    dirpath.mkdir(parents=True, exist_ok=True)
+    fig.write_html(str(dirpath / f"{filename}.html"))
+    fig.write_image(str(dirpath / f"{filename}.png"))
+
+
+def plot_confusion_matrix(
+    y_true, y_pred, filename, dirpath: Path = FIGURES_DIR, labels=None, show_as_percentaje=True
+) -> None:
+    cm = confusion_matrix(y_true, y_pred, labels=labels)
+    cm = cm.astype(np.int32)
+
+    # Calcular porcentajes por fila
+    cm_sum = cm.sum(axis=1, keepdims=True)
+    cm_percent = np.divide(cm, cm_sum, where=cm_sum != 0) * 100
+
+    # Combinar texto: valor (xx) + porcentaje (yy%)
+    z_text = (
+        [
+            [
+                f"{pct:.1f}%" if cm_sum[i][0] != 0 else "0"
+                for j, (val, pct) in enumerate(zip(row, cm_percent[i]))
+            ]
+            for i, row in enumerate(cm)
+        ]
+        if show_as_percentaje
+        else cm.astype(str).tolist()
+    )
+
+    fig = ff.create_annotated_heatmap(
+        z=cm, x=labels, y=labels, annotation_text=z_text, colorscale="Blues", showscale=True, reversescale=False
+    )
+
+    fig.update_layout(
+        title="Matriz de Confusion",
+        xaxis_title="Etiqueta Predicha",
+        yaxis_title="Etiqueta Verdadera",
+        template="plotly_white",
+    )
+
+    fig.update_yaxes(autorange="reversed")
+
+    fig.show()
+
+    dirpath.mkdir(parents=True, exist_ok=True)
+    fig.write_html(str(dirpath / f"{filename}.html"))
+    fig.write_image(str(dirpath / f"{filename}.png"))
 
 
 if __name__ == "__main__":
