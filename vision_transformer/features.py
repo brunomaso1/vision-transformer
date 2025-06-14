@@ -93,6 +93,13 @@ class SwinV2Transforms:
             f"Transformaciones de entrenamiento:{format_compose(self.train_transforms)}\n\n"
             f"Transformaciones de validacion:{format_compose(self.val_transforms)}"
         )
+    
+    def transforms_to_dict(self) -> dict:
+        """Devuelve un diccionario con las transformaciones de entrenamiento y validación."""
+        return {
+            "train_transforms": [str(t) for t in self.train_transforms.transforms],
+            "val_transforms": [str(t) for t in self.val_transforms.transforms],
+        }
 
 
 @app.command()
