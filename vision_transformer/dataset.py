@@ -11,7 +11,7 @@ import typer
 from datasets import Dataset, load_dataset
 
 from vision_transformer.config import (
-    DATA_RAW_FILE_ZIP,
+    DATA_RAW_FILENAME_ZIP,
     DATA_RAW_URL,
     DATASET_CONFIG,
     IMAGE_EXTENSIONS,
@@ -48,7 +48,7 @@ def download_raw_data(url: str = DATA_RAW_URL, chunk_size: int = 65_536):
         response.raise_for_status()
 
         total_size = int(response.headers.get("content-length", 0))  # Get total size of the file, if available
-        filename = RAW_DATA_DIR / DATA_RAW_FILE_ZIP
+        filename = RAW_DATA_DIR / DATA_RAW_FILENAME_ZIP
 
         if not os.path.exists(RAW_DATA_DIR):
             os.makedirs(RAW_DATA_DIR)
@@ -86,7 +86,7 @@ def download_raw_data(url: str = DATA_RAW_URL, chunk_size: int = 65_536):
 
 
 @app.command()
-def extract_raw_data(zip_file_path: Path = RAW_DATA_DIR / DATA_RAW_FILE_ZIP, clean: bool = True):
+def extract_raw_data(zip_file_path: Path = RAW_DATA_DIR / DATA_RAW_FILENAME_ZIP, clean: bool = True):
     """
     Extrae el archivo ZIP de datos en bruto y lo guarda en el directorio RAW_DATA_DIR.
     Si clean es True, elimina el archivo ZIP después de la extracción.

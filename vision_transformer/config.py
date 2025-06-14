@@ -28,6 +28,11 @@ EXTERNAL_DATA_DIR = DATA_DIR / "external"
 
 MODELS_DIR = PROJ_ROOT / "models"
 
+# Modelos
+MODELS_DIR_SIWNV2_TINY = MODELS_DIR / "swinv2-tiny"
+MODELS_DIR_SIWNV2_BASE = MODELS_DIR / "swinv2-base"
+MODELS_DIR_SIWNV2_LARGE = MODELS_DIR / "swinv2-large"
+
 REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
 
@@ -37,22 +42,25 @@ RAW_DATA_EXTRACTION_DIR = RAW_DATA_DIR / "EuroSAT_RGB"
 DATA_RAW_URL = "https://zenodo.org/records/7711810/files/EuroSAT_RGB.zip?download=1"
 
 # FilesNames
-DATA_RAW_FILE = "EuroSAT_RGB"
-DATA_RAW_FILE_ZIP = f"{DATA_RAW_FILE}.zip"
+DATA_RAW_FILENAME = "EuroSAT_RGB"
+DATA_RAW_FILENAME_ZIP = f"{DATA_RAW_FILENAME}.zip"
+METRICS_FILENAME = "metrics.csv"
+HISTORY_FILENAME = "history.csv"
+PREDICTIONS_FILENAME = "predictions.csv"
 
 # Datasets formats
 DATASET_CONFIG = {
     DatasetFormat.YOLO: {
         "extension": ".txt",
-        "interim_folderpath": INTERIM_DATA_DIR / f"{DATA_RAW_FILE}_yolo",
-        "processed_folderpath": PROCESSED_DATA_DIR / f"{DATA_RAW_FILE}_yolo",
+        "interim_folderpath": INTERIM_DATA_DIR / f"{DATA_RAW_FILENAME}_yolo",
+        "processed_folderpath": PROCESSED_DATA_DIR / f"{DATA_RAW_FILENAME}_yolo",
         "structure": "annotations",
         "classes_file": "classes.names",
     },
     DatasetFormat.HUGGINGFACE: {
         "extension": ".json",
-        "interim_folderpath": INTERIM_DATA_DIR / f"{DATA_RAW_FILE}_huggingface",
-        "processed_folderpath": PROCESSED_DATA_DIR / f"{DATA_RAW_FILE}_huggingface",
+        "interim_folderpath": INTERIM_DATA_DIR / f"{DATA_RAW_FILENAME}_huggingface",
+        "processed_folderpath": PROCESSED_DATA_DIR / f"{DATA_RAW_FILENAME}_huggingface",
         "structure": "datasets",
     },
 }
