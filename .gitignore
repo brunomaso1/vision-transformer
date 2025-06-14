@@ -193,3 +193,6 @@ Pipfile.lock
 
 # Outdated files
 */outdated
+
+# HuggingFace Checkpoints
+checkpoint*

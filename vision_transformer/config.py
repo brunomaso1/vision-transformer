@@ -40,6 +40,7 @@ RAW_DATA_EXTRACTION_DIR = RAW_DATA_DIR / "EuroSAT_RGB"
 
 # URLs
 DATA_RAW_URL = "https://zenodo.org/records/7711810/files/EuroSAT_RGB.zip?download=1"
+MLFLOW_URL = os.getenv("MLFLOW_URL", "http://localhost:5000")
 
 # FilesNames
 DATA_RAW_FILENAME = "EuroSAT_RGB"
@@ -66,6 +67,10 @@ DATASET_CONFIG = {
 }
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif'}
+
+# Dataset info
+DATASET_VERSION = "v1.0"
+DATASET_NAME = "EuroSAT_RGB"
 
 # Error handling
 if not DATA_RAW_URL:

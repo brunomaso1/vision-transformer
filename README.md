@@ -185,6 +185,11 @@ Para obtener una copia local y ejecutarla, sigue estos sencillos pasos de ejempl
    ```bash
    eval $(poetry env activate)
    ```
+4. Levanta una instancia de MLFlow para gestionar el ciclo de vida de los modelos:
+   - `bash`:
+   ```bash
+   mlflow server --host 127.0.0.1 --port 8080 --backend-store-uri sqlite:///mlflow.db
+   ```
 
 <p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
 
