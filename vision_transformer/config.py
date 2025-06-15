@@ -29,6 +29,10 @@ EXTERNAL_DATA_DIR = DATA_DIR / "external"
 MODELS_DIR = PROJ_ROOT / "models"
 
 # Modelos
+MODEL_NAME_SWINV2_TINY = "swinv2-tiny"
+MODEL_NAME_SWINV2_BASE = "swinv2-base"
+MODEL_NAME_SWINV2_LARGE = "swinv2-large"
+
 MODELS_DIR_SIWNV2_TINY = MODELS_DIR / "swinv2-tiny"
 MODELS_DIR_SIWNV2_BASE = MODELS_DIR / "swinv2-base"
 MODELS_DIR_SIWNV2_LARGE = MODELS_DIR / "swinv2-large"
