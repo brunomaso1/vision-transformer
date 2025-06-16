@@ -282,10 +282,7 @@ def plot_confusion_matrix(
     # Combinar texto: valor (xx) + porcentaje (yy%)
     z_text = (
         [
-            [
-                f"{pct:.1f}%" if cm_sum[i][0] != 0 else "0"
-                for j, (val, pct) in enumerate(zip(row, cm_percent[i]))
-            ]
+            [f"{pct:.1f}%" if cm_sum[i][0] != 0 else "0" for j, (val, pct) in enumerate(zip(row, cm_percent[i]))]
             for i, row in enumerate(cm)
         ]
         if show_as_percentaje
@@ -307,6 +304,60 @@ def plot_confusion_matrix(
 
     fig.show()
 
+    dirpath.mkdir(parents=True, exist_ok=True)
+    fig.write_html(str(dirpath / f"{filename}.html"))
+    fig.write_image(str(dirpath / f"{filename}.png"))
+
+
+def plot_radar_chart(
+    df: pd.DataFrame,
+    metrics: List[str],
+    title: str,
+    filename: str,
+    range_values: List[float] = [0.9, 1.0],
+    dirpath: Path = FIGURES_DIR,
+) -> None:
+    fig = go.Figure()
+
+    # Creamos los ejes del radar chart
+    for model in df["Model"].unique():
+        model_data = df[df["Model"] == model].iloc[0]
+        values = [model_data[metric] for metric in metrics]
+
+        values = values + [values[0]]  # Esto sirve para cerrar el gráfico
+        fig.add_trace(
+            go.Scatterpolar(
+                r=values,
+                theta=metrics + [metrics[0]],  # Se repite para cerrar el gráfico
+                # fill='toself', # Rellenar el área del gráfico
+                name=model,
+            )
+        )
+
+    fig.update_layout(
+        polar=dict(
+            radialaxis_visible=True,
+            radialaxis=dict(
+                gridcolor="rgba(0, 0, 0, 0.2)",
+                linecolor="rgba(0, 0, 0, 0.2)",
+                tickfont_color="rgba(0, 0, 0, 0.8)",
+                range=range_values,
+            ),
+            angularaxis=dict(
+                linewidth=1,
+                linecolor="gray",
+                gridcolor="rgba(0, 0, 0, 0.2)",
+                tickfont_color="rgba(0, 0, 0, 0.8)",
+                ticklen=10,
+                tickfont_size=10,
+            ),
+        ),
+        title=title,
+        title_x=0.5,  # Center the title
+        legend=dict(orientation="v", yanchor="bottom", y=0.75, xanchor="right", x=0.75),
+    )
+
+    fig.show()
     dirpath.mkdir(parents=True, exist_ok=True)
     fig.write_html(str(dirpath / f"{filename}.html"))
     fig.write_image(str(dirpath / f"{filename}.png"))
