@@ -126,7 +126,7 @@ def extract_raw_data(zip_file_path: Path = RAW_DATA_DIR / DATA_RAW_FILENAME_ZIP,
 def convert_dataset_to_model_format(
     format: DatasetFormat = DatasetFormat.HUGGINGFACE,
     dataset_path: Path = RAW_DATA_EXTRACTION_DIR,
-    output_dir: Path = DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["interim_folderpath"],
+    output_dir: Optional[Path] = None,
     summary: bool = True,
     delete_previous_data: bool = True,
     clean: bool = False,
@@ -149,6 +149,7 @@ def convert_dataset_to_model_format(
         typer.Exit: Si el formato solicitado no está implementado.
         typer.Exit: Si ocurre un error inesperado durante la conversión o limpieza.
     """
+
     # Validar que exista el directorio de entrada
     if not dataset_path.exists():
         logger.error(f"El directorio de entrada no existe: {dataset_path}")
@@ -161,6 +162,10 @@ def convert_dataset_to_model_format(
                 logger.debug("No se especificó un directorio de salida, se usará el predeterminado para YOLO")
                 output_dir = DATASET_CONFIG[DatasetFormat.YOLO]["interim_folderpath"]
         case DatasetFormat.HUGGINGFACE:
+            if not output_dir:
+                logger.debug("No se especificó un directorio de salida, se usará el predeterminado para HUGGINGFACE")
+                output_dir = DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["interim_folderpath"]
+
             # Validar estructura de entrada para HuggingFace
             if not _validate_eurosat_structure(dataset_path):
                 logger.error(f"La estructura del dataset en {dataset_path} no es compatible con EuroSAT")
@@ -212,8 +217,8 @@ def convert_dataset_to_model_format(
 @app.command()
 def split_dataset(
     format: DatasetFormat = DatasetFormat.HUGGINGFACE,
-    dataset_path: Path = DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["interim_folderpath"],
-    output_dir: Path = DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["processed_folderpath"],
+    dataset_path: Optional[Path] = None,
+    output_dir: Optional[Path] = None,
     split: Tuple[float, float, float] = (0.9, 0.1, 0.0),
     summary: bool = True,
     clean: bool = True,
@@ -240,16 +245,26 @@ def split_dataset(
         >>> python -m vision_transformer.dataset split-dataset --help
     """
     # Validar que exista el directorio de entrada
-    if not dataset_path.exists():
+    if dataset_path and not dataset_path.exists():
         logger.error(f"El directorio de entrada no existe: {dataset_path}")
         raise typer.Exit(1)
 
     match format:
         case DatasetFormat.YOLO:
+            if not dataset_path:
+                logger.debug("No se especificó un directorio de entrada, se usará el predeterminado para YOLO")
+                dataset_path = DATASET_CONFIG[DatasetFormat.YOLO]["interim_folderpath"]
             if not output_dir:
                 logger.debug("No se especificó un directorio de salida, se usará el predeterminado para YOLO")
                 output_dir = DATASET_CONFIG[DatasetFormat.YOLO]["processed_folderpath"]
         case DatasetFormat.HUGGINGFACE:
+            if not dataset_path:
+                logger.debug("No se especificó un directorio de entrada, se usará el predeterminado para HUGGINGFACE")
+                dataset_path = DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["interim_folderpath"]
+            if not output_dir:
+                logger.debug("No se especificó un directorio de salida, se usará el predeterminado para HUGGINGFACE")
+                output_dir = DATASET_CONFIG[DatasetFormat.HUGGINGFACE]["processed_folderpath"]
+
             # Validar estructura de entrada para HuggingFace
             if not _validate_huggingface_interim_structure(dataset_path):
                 logger.error(f"La estructura del dataset en {dataset_path} no es compatible con HuggingFace")

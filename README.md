@@ -69,8 +69,8 @@
 ## 🚀 Sobre el proyecto
 <a id="about-the-project"></a>
 
-<!-- TODO:
-* Poner una imagen de inferencia de un modelo. -->
+<div align="center"><img src="./resources/eurosat-portada.jpg" width="600" alt="Figura 1: Imagen ilustrativa del conjunto de datos - Obtenida de https://paperswithcode.com/dataset/eurosat"></div>
+<div align="center"><small><em>Figura 1: Imagen ilustrativa del conjunto de datos - Obtenida de https://paperswithcode.com/dataset/eurosat</em></small></div>
 
 Este proyecto tiene como objetivo clasificar imágenes satelitales utilizando <em>vision transformers</em>. Se posiciona en el marco de un trabajo final para la materia "Visión por Computadora 3" del posgrado en Inteligencia Artificial de la Facultad de Ingeniería de la Universidad de Buenos Aires.
 
@@ -145,6 +145,8 @@ Este proyecto está construido utilizando una variedad de herramientas entre las
 * [![Python][python.org]][python-url]
 * [![Cookiecutter Data Science][cookiecutter-data-science.drivendata.org]][cookiecutter-data-science-url]
 * [![Poetry][python-poetry.org]][python-poetry-url]
+* [![MLFlow][mlflow.org]][mlflow-url]
+* [![Perfect][prefect.io]][perfect-url]
 
 <p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
 
@@ -189,6 +191,11 @@ Para obtener una copia local y ejecutarla, sigue estos sencillos pasos de ejempl
    - `bash`:
    ```bash
    mlflow server --host 127.0.0.1 --port 8080 --backend-store-uri sqlite:///mlflow.db
+   ```
+5. Levanta una instancia de Prefect para gestionar los flujos de trabajo:
+   - `bash`:
+   ```bash
+   prefect server start
    ```
 
 <p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
@@ -281,8 +288,11 @@ Distribuido bajo la licencia GNU. Consulta `LICENSE` para más información.
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [cookiecutter-data-science-url]: https://cookiecutter-data-science.drivendata.org/
 [cookiecutter-data-science.drivendata.org]: https://img.shields.io/badge/cookiecutter-data%20science-328F97?logo=cookiecutter&style=for-the-badge
-
 [python-url]: https://www.python.org/
 [python.org]: https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white
 [python-poetry-url]: https://python-poetry.org/
 [python-poetry.org]: https://img.shields.io/badge/poetry-000000?style=for-the-badge&logo=poetry&logoColor=white
+[mlflow-url]: https://mlflow.org/
+[mlflow.org]: https://img.shields.io/badge/mlflow-FF4B4B?style=for-the-badge&logo=mlflow&logoColor=white
+[perfect-url]: https://www.prefect.io/
+[prefect.io]: https://img.shields.io/badge/perfect-0A192F?style=for-the-badge&logo=prefect&logoColor=white

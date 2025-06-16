@@ -7,7 +7,7 @@ from evaluate import Metric
 from sklearn.metrics import accuracy_score
 
 
-class DatasetFormat(Enum):
+class DatasetFormat(str, Enum):
     """
     Enum para representar los formatos de dataset soportados.
     Atributos:
