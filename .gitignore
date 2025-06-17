@@ -199,3 +199,6 @@ checkpoint*
 
 # Model weights
 *.pt
+
+# Yolo training files
+notebooks/runs
