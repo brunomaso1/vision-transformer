@@ -349,7 +349,7 @@ def split_dataset(
             labels_test = labels_test_val  # Aunque no se usa directamente, mantener la simetría
 
     # Determinar qué splits procesar según los ratios
-    if train_ratio == 0:
+    if train_ratio == 1.0:
         splits_to_process = {
             "train": (files_train, labels_train),
         }
