@@ -190,7 +190,7 @@ Para obtener una copia local y ejecutarla, sigue estos sencillos pasos de ejempl
 4. Levanta una instancia de MLFlow para gestionar el ciclo de vida de los modelos:
    - `bash`:
    ```bash
-   mlflow server --host 127.0.0.1 --port 8080 --backend-store-uri sqlite:///mlflow.db
+   mlflow server --host localhost --port 8080 --backend-store-uri sqlite:///mlflow.db
    ```
 5. Levanta una instancia de Prefect para gestionar los flujos de trabajo:
    - `bash`:

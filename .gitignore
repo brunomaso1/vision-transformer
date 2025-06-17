@@ -196,3 +196,6 @@ Pipfile.lock
 
 # HuggingFace Checkpoints
 checkpoint*
+
+# Model weights
+*.pt
