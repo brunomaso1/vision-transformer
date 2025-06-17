@@ -32,10 +32,14 @@ MODELS_DIR = PROJ_ROOT / "models"
 MODEL_NAME_SWINV2_TINY = "swinv2-tiny"
 MODEL_NAME_SWINV2_BASE = "swinv2-base"
 MODEL_NAME_SWINV2_LARGE = "swinv2-large"
+MODEL_NAME_CVT_13 = "cvt-13"
+MODEL_NAME_CVT_21 = "cvt-21"
 
 MODELS_DIR_SIWNV2_TINY = MODELS_DIR / "swinv2-tiny"
 MODELS_DIR_SIWNV2_BASE = MODELS_DIR / "swinv2-base"
 MODELS_DIR_SIWNV2_LARGE = MODELS_DIR / "swinv2-large"
+MODELS_DIR_CVT_13 = MODELS_DIR / "cvt-13"
+MODELS_DIR_CVT_21 = MODELS_DIR / "cvt-21"
 
 REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
@@ -44,7 +48,7 @@ RAW_DATA_EXTRACTION_DIR = RAW_DATA_DIR / "EuroSAT_RGB"
 
 # URLs
 DATA_RAW_URL = "https://zenodo.org/records/7711810/files/EuroSAT_RGB.zip?download=1"
-MLFLOW_URL = os.getenv("MLFLOW_URL", "http://localhost:5000")
+MLFLOW_URL = os.getenv("MLFLOW_URL", "http://localhost:8080")
 PREFECT_URL = os.getenv("PREFECT_URL", "http://localhost:4200")
 
 # FilesNames
