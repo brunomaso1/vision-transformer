@@ -95,30 +95,65 @@ def show_image_grid(data: dict, title: str = "Grilla de Imágenes", num_cols: in
     plt.show()
 
 
-def plot_class_distribution(dataset, id2label, split="train"):
+def plot_class_distribution(dataset, id2label, splits=("train",), colors=None):
     """
-    Grafica la distribución de clases.
+    Grafica la distribución de clases en un único gráfico de barras apiladas por clase.
+
+    Args:
+        dataset: diccionario HuggingFace con claves por split.
+        id2label: diccionario {id: nombre de clase}.
+        splits: tupla con los nombres de los splits a incluir.
+        colors: tupla de colores (uno por split), opcional.
     """
-    counts = Counter(dataset[split]["label"])
+    from collections import Counter
+    import pandas as pd
+    import matplotlib.pyplot as plt
 
-    df = pd.DataFrame([{"class": f"{idx}: {name}", "count": counts.get(idx, 0)} for idx, name in id2label.items()])
-    df = df.sort_values(by=["count", "class"], ascending=[True, False])
+    # Contar ocurrencias por clase y split
+    data = {split: Counter(dataset[split]["label"]) for split in splits}
 
-    ax = df.plot.barh(x="class", y="count", figsize=(6, 4), legend=False)
-    ax.set_title(f"Cantidad de imágenes por clase en el set de {split}", fontsize=10)
+    # Construir DataFrame
+    rows = []
+    for idx, name in id2label.items():
+        row = {"class": f"{idx}: {name}"}
+        for split in splits:
+            row[split] = data[split].get(idx, 0)
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+    df = df.set_index("class")
+    df = df.loc[df.sum(axis=1).sort_values(ascending=True).index]  # ordenar por total
+
+    # Graficar barras apiladas
+    ax = df.plot.barh(
+        stacked=True,
+        figsize=(6, 4),
+        width=0.8,
+        color=colors if colors is not None else None
+    )
+
+    ax.set_title("Cantidad de imágenes por clase (stacked por split)", fontsize=10)
     ax.set_ylabel("")
+    ax.set_xlabel("Cantidad de imágenes")
+    ax.set_xlim([0, df.sum(axis=1).max() * 1.15])  # margen derecho para etiquetas y leyenda
 
-    for i, (count) in enumerate(df["count"]):
-        ax.text(
-            count - max(df["count"]) * 0.01,
-            i,
-            str(count),
-            va="center",
-            ha="right",
-            color="white",
-            fontweight="bold",
-            fontsize=8,
-        )
+    # Etiquetas internas
+    for i, (idx, row) in enumerate(df.iterrows()):
+        x_offset = 0
+        for j, split in enumerate(splits):
+            count = row[split]
+            if count > 0:
+                ax.text(
+                    x_offset + count / 2,
+                    i,
+                    str(count),
+                    va="center",
+                    ha="center",
+                    fontsize=7,
+                    color="white",
+                    fontweight="bold"
+                )
+                x_offset += count
 
     plt.tight_layout()
     plt.show()
