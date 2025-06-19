@@ -351,6 +351,7 @@ def plot_radar_chart(
     filename: str,
     range_values: List[float] = [0.9, 1.0],
     dirpath: Path = FIGURES_DIR,
+    colors: Optional[Dict[str, str]] = None,
     fig_size: Optional[Tuple[int, int]] = None
 ) -> None:
     fig = go.Figure()
@@ -359,14 +360,15 @@ def plot_radar_chart(
     for model in df["Model"].unique():
         model_data = df[df["Model"] == model].iloc[0]
         values = [model_data[metric] for metric in metrics]
-
         values = values + [values[0]]  # Esto sirve para cerrar el gráfico
+
         fig.add_trace(
             go.Scatterpolar(
                 r=values,
                 theta=metrics + [metrics[0]],  # Se repite para cerrar el gráfico
                 # fill='toself', # Rellenar el área del gráfico
                 name=model,
+                line=dict(color=colors[model]) if colors and model in colors else None,
             )
         )
 
