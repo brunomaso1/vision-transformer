@@ -221,6 +221,14 @@ pytest
 > [!TIP]
 > Recuerda que debes activar el entorno virtual creado por Poetry antes de ejecutar los tests. También puedes ejecutar los tests de forma aislada utilizando `pytest` seguido del nombre del archivo de test específico, por ejemplo: `pytest tests/test_dataset_flow.py`.
 
+### Ejecución de flujos de trabajo de Prefect
+
+Para ejecutar los flujos de trabajo de Prefect, primero debes asegurarte de que el servidor de Prefect esté en funcionamiento. Luego, puedes ejecutar un flujo específico utilizando el siguiente comando:
+- `bash`:
+```bash
+python -m vision_transformer.flows.cli prepare-dataset-flow huggingface
+```
+
 <p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
 
 <!-- ROADMAP -->
