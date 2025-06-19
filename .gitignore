@@ -203,4 +203,7 @@ checkpoint*
 # Yolo training files
 notebooks/runs
 models/yolo11m-cls/train
+
+# Mlflow artifacts
 mlartifacts
+mlruns
