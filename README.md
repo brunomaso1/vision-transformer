@@ -27,10 +27,10 @@
       </table>
     </div>
     <br />
-    <a href="https://github.com/brunomaso1/vision-transformer"><strong>Explora la documentación »</strong></a>
+    <a href="https://brunomaso1.github.io/vision-transformer/"><strong>Explora la documentación »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/brunomaso1/vision-transformer">Ver una demo</a>
+    <a href="https://github.com/brunomaso1/vision-transformer">Informe</a>
     &middot;
     <a href="https://github.com/brunomaso1/vision-transformer/issues/new?labels=bug&template=bug-report---.md">Reportar un problema</a>
     &middot;
@@ -159,7 +159,7 @@ Este proyecto está construido utilizando una variedad de herramientas entre las
 Este es un ejemplo de cómo puedes dar instrucciones para configurar tu proyecto localmente.
 Para obtener una copia local y ejecutarla, sigue estos sencillos pasos de ejemplo.
 
-### Prerequisites
+### Pre-requisitos
 <a id="prerequisites"></a>
 
 * **Poetry**: Asegúrate de tener instalado [Poetry](https://python-poetry.org/docs/#installation) para gestionar las dependencias del proyecto.
@@ -217,26 +217,25 @@ pytest
 > [!TIP]
 > Recuerda que debes activar el entorno virtual creado por Poetry antes de ejecutar los tests. También puedes ejecutar los tests de forma aislada utilizando `pytest` seguido del nombre del archivo de test específico, por ejemplo: `pytest tests/test_dataset_flow.py`.
 
-> [!WARNING]  
-> 🚧 Sección en construcción... 🚧
-
-<!-- TODO:
-* Explicar cómo ejecutar el proyecto, por ejemplo, cómo entrenar un modelo o hacer inferencias.
-* Incluir ejemplos de comandos que se pueden ejecutar en la terminal.
-* Incluir ejemplos de cómo utilizar las funciones principales del proyecto.
-
-_Para más ejemplos, consulta la [Documentación](https://example.com)_
- -->
-
 <p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
 
 <!-- ROADMAP -->
 ## 🛣️ Roadmap
 <a id="roadmap"></a>
 
-- [ ] Mejorar la documentación del proyecto.
-- [ ] Crear el pipeline de entrenamiento y evaluación de modelos.
-- [ ] Implementar un modelo de <em>vision transformer</em> para clasificación de imágenes.
+- [x] Implementar flujo de trabajo de Prefect para la descarga del conjunto de datos.
+- [x] Modelos
+  - [x] SwinV2
+  - [x] Convolutional Vision Transformer
+  - [x] ViT Base
+  - [x] CNN
+- [x] Implementar MLFlow para el seguimiento del ciclo de vida de los modelos.
+- [x] Implementar tests unitarios para las funciones principales del proyecto.
+- [x] Implementar wiki utilizando MkDocs para documentar el proyecto.
+- [x] Deployar wiki en GitHub Pages.
+- [x] Implementar informe final.
+- [ ] Implementar entrenamiento de modelo final.
+- [ ] Deployar modelo final en un servidor de producción.
 
 Consulta la [lista de issues abiertas](https://github.com/brunomaso1/vision-transformer/issues) para ver todas las características propuestas (y problemas conocidos).
 
