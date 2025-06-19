@@ -1,7 +1,7 @@
 from collections import Counter
 import math
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import cv2
 from PIL import Image
@@ -352,6 +352,7 @@ def plot_radar_chart(
     range_values: List[float] = [0.9, 1.0],
     dirpath: Path = FIGURES_DIR,
     colors: Optional[Dict[str, str]] = None,
+    fig_size: Optional[Tuple[int, int]] = None
 ) -> None:
     fig = go.Figure()
 
@@ -393,6 +394,9 @@ def plot_radar_chart(
         title_x=0.5,  # Center the title
         legend=dict(orientation="v", yanchor="bottom", y=0.75, xanchor="right", x=0.75),
     )
+
+    if fig_size:
+        fig.update_layout(width=fig_size[0], height=fig_size[1])
 
     fig.show()
     dirpath.mkdir(parents=True, exist_ok=True)

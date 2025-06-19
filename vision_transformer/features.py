@@ -6,6 +6,8 @@ import torch
 from tqdm import tqdm
 import typer
 
+from PIL import Image
+
 from transformers import ViTImageProcessor, ViTImageProcessorFast
 
 # Transformaciones de imágenes (Torchvision)
@@ -17,6 +19,10 @@ from torchvision.transforms import (
     RandomHorizontalFlip,
     Resize,
     CenterCrop,
+    RandomApply,
+    RandomRotation,
+    RandomCrop,
+    ColorJitter,
 )
 
 from vision_transformer.config import PROCESSED_DATA_DIR
@@ -93,12 +99,163 @@ class SwinV2Transforms:
             f"Transformaciones de entrenamiento:{format_compose(self.train_transforms)}\n\n"
             f"Transformaciones de validacion:{format_compose(self.val_transforms)}"
         )
-    
+
     def transforms_to_dict(self) -> dict:
         """Devuelve un diccionario con las transformaciones de entrenamiento y validación."""
         return {
-            "train_transforms": [str(t) for t in self.train_transforms.transforms],
-            "val_transforms": [str(t) for t in self.val_transforms.transforms],
+            "train_transforms": [str(t) for t in self.train_transforms],
+            "val_transforms": [str(t) for t in self.val_transforms],
+        }
+
+
+class CVTTransforms:
+    """Clase para aplicar transformaciones a las imágenes usando la configuración de un `ViTImageProcessor`.
+
+    Args:
+        image_processor (Union[ViTImageProcessor, ViTImageProcessorFast]): Procesador de imágenes ViT para obtener la configuración de las transformaciones.
+    """
+
+    def __init__(self, image_processor: Union[ViTImageProcessor, ViTImageProcessorFast]) -> None:
+        self.image_processor = image_processor
+        self.mean = image_processor.image_mean
+        self.std = image_processor.image_std
+        self.size = image_processor.size["shortest_edge"]  # 224
+
+        self.train_transforms = Compose(
+            [
+                RandomApply([RandomRotation(15)], p=0.8),
+                RandomApply(
+                    [
+                        Resize((72, 72), interpolation=Image.BICUBIC),
+                        RandomCrop(64, padding=0),
+                    ],
+                    p=0.8,
+                ),
+                RandomHorizontalFlip(),
+                RandomApply([ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1)], p=0.8),
+                Resize((224, 224), interpolation=Image.BICUBIC),  # required for CvT
+                ToTensor(),
+                Normalize(mean=self.mean, std=self.std),
+            ]
+        )
+
+        self.val_transforms = Compose(
+            [
+                Resize((self.size, self.size), interpolation=Image.BICUBIC),
+                ToTensor(),
+                Normalize(mean=self.mean, std=self.std),
+            ]
+        )
+
+        self._unnormalize = Normalize(
+            mean=[-m / s for m, s in zip(self.mean, self.std)],
+            std=[1 / s for s in self.std],
+        )
+
+    def __call__(self, batch, train=True):
+        return self.transforms(batch, train)
+
+    def transforms(self, batch, train=True):
+        images = (
+            [self.train_transforms(img) for img in batch["image"]]
+            if train
+            else [self.val_transforms(img) for img in batch["image"]]
+        )
+
+        return {"pixel_values": images, "label": batch["label"]}
+
+    def unnormalize(self, img: torch.Tensor) -> torch.Tensor:
+        return self._unnormalize(img)
+
+    def transforms_to_string(self) -> str:
+        def format_compose(compose):
+            return "\n  - " + "\n  - ".join(str(t) for t in compose.transforms)
+
+        return (
+            f"Transformaciones de entrenamiento:{format_compose(self.train_transforms)}\n\n"
+            f"Transformaciones de validacion:{format_compose(self.val_transforms)}"
+        )
+
+    def transforms_to_dict(self) -> dict:
+        """Devuelve un diccionario con las transformaciones de entrenamiento y validación."""
+        return {
+            "train_transforms": [str(t) for t in self.train_transforms],
+            "val_transforms": [str(t) for t in self.val_transforms],
+        }
+
+
+class VitBaseTransforms:
+    """Clase para aplicar transformaciones a las imágenes usando la configuración de un `ViTImageProcessor`.
+
+    Args:
+        image_processor (Union[ViTImageProcessor, ViTImageProcessorFast]): Procesador de imágenes ViT para obtener la configuración de las transformaciones.
+    """
+
+    def __init__(self, image_processor: Union[ViTImageProcessor, ViTImageProcessorFast]) -> None:
+        self.image_processor = image_processor
+        self.mean = image_processor.image_mean
+        self.std = image_processor.image_std
+        self.size = 224
+
+        self.train_transforms = Compose(
+            [
+                RandomApply([RandomRotation(15)], p=0.8),
+                RandomApply(
+                    [Resize((72, 72), interpolation=Image.BICUBIC), RandomCrop(64, padding=0)],
+                    p=0.8,
+                ),
+                RandomHorizontalFlip(),
+                RandomApply(
+                    [ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1)], p=0.8
+                ),
+                Resize((224, 224), interpolation=Image.BICUBIC),
+                ToTensor(),
+                Normalize(mean=self.mean, std=self.std),
+            ]
+        )
+
+        self.val_transforms = Compose(
+            [
+                Resize((self.size, self.size), interpolation=Image.BICUBIC),
+                ToTensor(),
+                Normalize(mean=self.mean, std=self.std),
+            ]
+        )
+
+        self._unnormalize = Normalize(
+            mean=[-m / s for m, s in zip(self.mean, self.std)],
+            std=[1 / s for s in self.std],
+        )
+
+    def __call__(self, batch, train=True):
+        return self.transforms(batch, train)
+
+    def transforms(self, batch, train=True):
+        images = (
+            [self.train_transforms(img) for img in batch["image"]]
+            if train
+            else [self.val_transforms(img) for img in batch["image"]]
+        )
+
+        return {"pixel_values": images, "label": batch["label"]}
+
+    def unnormalize(self, img: torch.Tensor) -> torch.Tensor:
+        return self._unnormalize(img)
+
+    def transforms_to_string(self) -> str:
+        def format_compose(compose):
+            return "\n  - " + "\n  - ".join(str(t) for t in compose.transforms)
+
+        return (
+            f"Transformaciones de entrenamiento:{format_compose(self.train_transforms)}\n\n"
+            f"Transformaciones de validacion:{format_compose(self.val_transforms)}"
+        )
+
+    def transforms_to_dict(self) -> dict:
+        """Devuelve un diccionario con las transformaciones de entrenamiento y validación."""
+        return {
+            "train_transforms": [str(t) for t in self.train_transforms],
+            "val_transforms": [str(t) for t in self.val_transforms],
         }
 
 

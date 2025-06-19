@@ -147,6 +147,8 @@ Este proyecto está construido utilizando una variedad de herramientas entre las
 * [![Poetry][python-poetry.org]][python-poetry-url]
 * [![MLFlow][mlflow.org]][mlflow-url]
 * [![Perfect][prefect.io]][perfect-url]
+* [![Mkdocs][mkdocs.org]][mkdocs-url]
+* [![Pytest][pytest.org]][pytest-url]
 
 <p align="right">(<a href="#readme-top">volver al inicio</a>)</p>
 
@@ -203,6 +205,17 @@ Para obtener una copia local y ejecutarla, sigue estos sencillos pasos de ejempl
 <!-- USAGE EXAMPLES -->
 ## ⚡ Uso
 <a id="usage"></a>
+
+### Ejecución de tests
+
+Este proyecto incluye una serie de tests para asegurar su correcto funcionamiento. Puedes ejecutar los tests utilizando `pytest` de la siguiente manera:
+- `bash`:
+```bash
+pytest 
+```
+
+> [!TIP]
+> Recuerda que debes activar el entorno virtual creado por Poetry antes de ejecutar los tests. También puedes ejecutar los tests de forma aislada utilizando `pytest` seguido del nombre del archivo de test específico, por ejemplo: `pytest tests/test_dataset_flow.py`.
 
 > [!WARNING]  
 > 🚧 Sección en construcción... 🚧
