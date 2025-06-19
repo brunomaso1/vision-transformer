@@ -30,7 +30,7 @@
     <a href="https://brunomaso1.github.io/vision-transformer/"><strong>Explora la documentación »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/brunomaso1/vision-transformer">Informe</a>
+    <a href="https://github.com/brunomaso1/vision-transformer/blob/main/reports/Informe%20Final.pdf">Informe</a>
     &middot;
     <a href="https://github.com/brunomaso1/vision-transformer/issues/new?labels=bug&template=bug-report---.md">Reportar un problema</a>
     &middot;
@@ -126,6 +126,10 @@ La estructura del proyecto es la siguiente:
     ├── dataset.py              <- Scripts para descargar o generar datos.
     │
     ├── features.py             <- Código para crear características para el modelado.
+    |
+    ├── flows                   <- Flujos de trabajo de Prefect para orquestar tareas.
+    |
+    ├── utils.py                <- Funciones de utilidad y helpers.
     │
     ├── modeling                
     │   ├── __init__.py 
