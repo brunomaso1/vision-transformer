@@ -392,7 +392,7 @@ def plot_radar_chart(
         ),
         title=title,
         title_x=0.5,  # Center the title
-        legend=dict(orientation="v", yanchor="bottom", y=0.75, xanchor="right", x=0.75),
+        legend=dict(orientation="v", yanchor="bottom", y=0.75, xanchor="right", x=1.00),
     )
 
     if fig_size:
